@@ -10,7 +10,7 @@
   - Use [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) to show the list of words in installed dictionaries
     if the word under cursor is not found by `dict`.
 
-# Installation
+## Installation
 
   - Install `dict.nvim` as any other Neovim plugin.
 
@@ -23,9 +23,9 @@
     sudo apt install dict dictd dict-wn dict-gcide dict-freedict-por-eng
     ```
 
-# Configuration
+## Configuration
 
-## Mandatory
+### Mandatory
 
 You have to create a key binding to run `dict.nvim`. Example for `init.vim`:
 
@@ -36,10 +36,10 @@ nmap <Leader>d <Cmd>lua require("dict").lookup()<CR>
 and for `init.lua`:
 
 ```lua
-vim.keymap.set('n', '<LocalLeader>d', '<Cmd>lua require("dict").lookup()<CR>')
+vim.keymap.set('n', '<Leader>d', '<Cmd>lua require("dict").lookup()<CR>')
 ```
 
-## Optional
+### Optional
 
 By default, `dict.nvim` will run `dict` without any argument other than the word
 being looked up. It will read dictionary indexes from `/usr/share/dictd`,
@@ -66,16 +66,17 @@ sudo dictdconfig -w
 
 and, finally, restart the `dictd` daemon.
 
-# Usage
+## Usage
 
-- Press the key binding that you have configured to open a float window with
-  `dict` results for the word under cursor.
+- Put the cursor over the word whose definition you want to lookup. Then,
+  press the key binding that you have configured to open a float window with
+  `dict` results.
 
 - On the float window, you can:
 
   - press the same key binding to replace the displayed word definition;
 
   - press `<Enter>` to use the current word under the float window cursor to
-    replace the word that was under the cursor in the editor.
+    replace the word that was under the cursor in the editor;
 
   - press either `<Esc>` or `q` to quit the float window.

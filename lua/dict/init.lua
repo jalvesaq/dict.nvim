@@ -172,7 +172,7 @@ function M.lookup(wrd)
         end
     end
 
-    if not wrd  then
+    if not wrd then
         wrd = get_cword()
         if not wrd then
             return
@@ -181,9 +181,9 @@ function M.lookup(wrd)
 
     local a
     if M.opts.dict then
-        a, _ = io.popen("dict -d " .. M.opts.dict .. " '" .. wrd .. "' 2>/dev/shm/dict_nvim_err", "r")
+        a, _ = io.popen("dict -d " .. M.opts.dict .. " '" .. wrd .. "' 2>/dev/null", "r")
     else
-        a, _ = io.popen("dict '" .. wrd .. "' 2>/dev/shm/dict_nvim_err", "r")
+        a, _ = io.popen("dict '" .. wrd .. "' 2>/dev/null", "r")
     end
     if not a then
         vim.api.nvim_err_writeln("Error running: " .. "dict '" .. wrd .. "'")
@@ -239,7 +239,7 @@ function M.lookup(wrd)
         local nc = vim.o.columns
         local fcol = 2
         if nc > 82 then
-            fcol  = math.floor((nc - 80) / 2)
+            fcol = math.floor((nc - 80) / 2)
         end
         local wh = vim.api.nvim_win_get_height(0) - 2
         local fheight
