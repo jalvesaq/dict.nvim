@@ -197,11 +197,10 @@ function M.lookup(wrd)
         return
     end
 
-
     if output == '' then
         if M.from_picker then
             M.from_picker = false
-            vim.api.nvim_echo({{"dictd: no definitions found for "}, {wrd, "Identifier"}}, false)
+            vim.api.nvim_echo({{"dictd: no definitions found for "}, {wrd, "Identifier"}}, false, {})
         else
             M.pick_word(wrd)
         end
