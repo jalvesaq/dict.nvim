@@ -13,8 +13,10 @@ function M.setup(config)
         dict_dir = '/usr/share/dictd'
     }
 
-    for k, v in pairs(config) do
-        M.opts[k] = v
+    if config then
+        for k, v in pairs(config) do
+            M.opts[k] = v
+        end
     end
     M.from_picker = false
     M.wlist = {}
@@ -102,7 +104,7 @@ end
 
 function M.pick_word(wrd)
     if not M.wlist then
-        M.setup({})
+        M.setup()
     end
     if #M.wlist == 0 then
         if not M.start() then
@@ -164,7 +166,7 @@ end
 
 function M.lookup(wrd)
     if not M.wlist then
-        M.setup({})
+        M.setup()
     end
     if #M.wlist == 0 then
         if not M.start() then
