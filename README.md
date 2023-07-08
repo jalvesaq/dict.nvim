@@ -27,16 +27,16 @@
 
 ### Mandatory
 
-You have to create a key binding to run `dict.nvim`. Example for `init.vim`:
-
-```vim
-nmap <Leader>d <Cmd>lua require("dict").lookup()<CR>
-```
-
-and for `init.lua`:
+You have to create a key binding to run `dict.nvim`. Example for `init.lua`:
 
 ```lua
 vim.keymap.set('n', '<Leader>d', '<Cmd>lua require("dict").lookup()<CR>')
+```
+
+You have also to call the `setup` function:
+
+```lua
+require'dict'.setup()
 ```
 
 ### Optional
@@ -46,7 +46,7 @@ being looked up. It will read dictionary indexes from `/usr/share/dictd`,
 and will cache the compiled list of words at `~/.cach/dict.nvim`. Instead,
 you can tell `dict` to search a single dictionary and can also tell
 `dict.nvim` where to read the indexes, and where to store its own compiled
-list of words. Example for `init.lua`:
+list of words. Example:
 
 ```lua
 require'dict'.setup({
