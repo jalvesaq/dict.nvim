@@ -33,12 +33,6 @@ You have to create a key binding to run `dict.nvim`. Example for `init.lua`:
 vim.keymap.set('n', '<Leader>d', '<Cmd>lua require("dict").lookup()<CR>')
 ```
 
-You have also to call the `setup` function:
-
-```lua
-require'dict'.setup()
-```
-
 ### Optional
 
 By default, `dict.nvim` will run `dict` without any argument other than the word
@@ -76,7 +70,7 @@ and, finally, restart the `dictd` daemon.
 
   - press the same key binding to replace the displayed word definition;
 
-  - press `<Enter>` to use the current word under the float window cursor to
-    replace the word that was under the cursor in the editor;
+  - press `<Enter>` to replace the word that was under the cursor in the
+    editor with the current word under the cursor in the float window;
 
   - press either `<Esc>` or `q` to quit the float window.

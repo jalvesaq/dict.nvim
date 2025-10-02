@@ -1,55 +1,38 @@
-local pickers = require "telescope.pickers"
-local finders = require "telescope.finders"
-local conf = require("telescope.config").values
-local actions = require "telescope.actions"
-local action_state = require "telescope.actions.state"
+local function dwarn(msg) vim.notify(msg, vim.log.levels.WARN, { title = "dict" }) end
+local from_picker = false
+local wlist = {}
+local wid
 
 local M = {}
 
-function M.setup(config)
-    M.opts = {
-        dict = nil,
-        cache_dir = os.getenv('HOME') .. '/.cache/dict.nvim',
-        dict_dir = '/usr/share/dictd'
-    }
-
-    if config then
-        for k, v in pairs(config) do
-            M.opts[k] = v
-        end
-    end
-    M.from_picker = false
-    M.wlist = {}
-end
-
-function M.start()
+local function start()
     -- Each combination of dictionaries requires its own cache file
-    local cache_file = ''
-    local diclist = { }
+    local cache_file = ""
+    local diclist = {}
     if M.opts.dict then
-        cache_file = M.opts.cache_dir .. '/index_' .. M.opts.dict
+        cache_file = M.opts.cache_dir .. "/index_" .. M.opts.dict
         diclist = { M.opts.dict }
     else
-        cache_file = M.opts.cache_dir .. '/index'
-        local dl = vim.fn.split(vim.fn.glob(M.opts.dict_dir .. '/' .. '*.index'))
-        local d = ''
+        cache_file = M.opts.cache_dir .. "/index"
+        local dl = vim.split(vim.fn.glob(M.opts.dict_dir .. "/" .. "*.index"), "\n")
+        local d = ""
         for _, v in pairs(dl) do
-            d = string.gsub(v, '.*/', '')
-            d = string.gsub(d, '.index', '')
+            d = string.gsub(v, ".*/", "")
+            d = string.gsub(d, ".index", "")
             table.insert(diclist, d)
-            cache_file = cache_file .. '_' .. d
+            cache_file = cache_file .. "_" .. d
         end
     end
 
     if vim.fn.isdirectory(M.opts.cache_dir) == 0 then
-        vim.fn.mkdir(M.opts.cache_dir, 'p')
+        vim.fn.mkdir(M.opts.cache_dir, "p")
     end
 
     -- Use the cache file if it already exists
-    local f = io.open(cache_file, 'r')
+    local f = io.open(cache_file, "r")
     if f then
         for line in f:lines() do
-            table.insert(M.wlist, line)
+            table.insert(wlist, line)
         end
         f:close()
         return true
@@ -58,9 +41,9 @@ function M.start()
     -- Create the cache file
     local tmplist = {}
     for _, v in pairs(diclist) do
-        f = io.open(M.opts.dict_dir .. '/' .. v .. '.index', 'r')
+        f = io.open(M.opts.dict_dir .. "/" .. v .. ".index", "r")
         if f == nil then
-            vim.api.nvim_err_writeln("Could not open '" .. M.opts.dict_dir .. '/' .. v .. "'")
+            dwarn("Could not open '" .. M.opts.dict_dir .. "/" .. v .. "'")
             return false
         end
         for line in f:lines() do
@@ -76,86 +59,85 @@ function M.start()
     table.sort(tmplist)
     for i = 1, #tmplist, 1 do
         if i < #tmplist then
-            if tmplist[i] ~= tmplist[i+1] then
-                table.insert(M.wlist, tmplist[i])
-            end
+            if tmplist[i] ~= tmplist[i + 1] then table.insert(wlist, tmplist[i]) end
         else
-            table.insert(M.wlist, tmplist[i])
+            table.insert(wlist, tmplist[i])
         end
     end
 
-    if #M.wlist == 0 then
-        vim.api.nvim_err_writeln("Could not fill the list of words")
+    if #wlist == 0 then
+        dwarn("Could not fill the list of words")
         return false
     end
 
     -- Save the cache file
     f = io.open(cache_file, "w")
     if not f then
-        vim.api.nvim_err_writeln("Could not open '" .. cache_file .. "' for writing")
+        dwarn("Could not open '" .. cache_file .. "' for writing")
         return false
     end
-    for _, v in pairs(M.wlist) do
+    for _, v in pairs(wlist) do
         f:write(v .. "\n")
     end
     f:close()
     return true
 end
 
-function M.pick_word(wrd)
-    if not M.wlist then
-        M.setup()
+local function pick_word(wrd)
+    local pickers = require("telescope.pickers")
+    local finders = require("telescope.finders")
+    local conf = require("telescope.config").values
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
+
+    if not wlist then M.setup() end
+    if #wlist == 0 then
+        if not start() then return end
     end
-    if #M.wlist == 0 then
-        if not M.start() then
-            return
-        end
-    end
-    pickers.new({default_text = wrd}, {
-        finder = finders.new_table {
-            results = M.wlist,
-            entry_maker = function(entry)
-                return {
-                    value = entry,
-                    display = entry,
-                    ordinal = entry,
-                }
-            end
-        },
-        sorter = conf.generic_sorter({}),
-        attach_mappings = function(prompt_bufnr, _)
-            actions.select_default:replace(function()
-                actions.close(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                if selection and selection.value then
-                    M.from_picker = true
-                    M.lookup(selection.value)
-                end
-            end)
-            return true
-        end,
-    }):find()
+    pickers
+        .new({ default_text = wrd }, {
+            finder = finders.new_table({
+                results = wlist,
+                entry_maker = function(entry)
+                    return {
+                        value = entry,
+                        display = entry,
+                        ordinal = entry,
+                    }
+                end,
+            }),
+            sorter = conf.generic_sorter({}),
+            attach_mappings = function(prompt_bufnr, _)
+                actions.select_default:replace(function()
+                    actions.close(prompt_bufnr)
+                    local selection = action_state.get_selected_entry()
+                    if selection and selection.value then
+                        from_picker = true
+                        M.lookup(selection.value)
+                    end
+                end)
+                return true
+            end,
+        })
+        :find()
 end
 
-function M.winclosed()
-    M.wid = nil
-end
+local function winclosed() wid = nil end
 
 local get_cword = function()
-    local line = vim.fn.getline('.')
-    local cpos = vim.fn.getpos('.')
+    local line = vim.fn.getline(".")
+    local cpos = vim.fn.getpos(".")
     if type(line) == "string" then
         local cchar = string.sub(line, cpos[3], cpos[3])
-        vim.g.TheCChar = {line, cpos, cchar}
-        if cchar == '' or string.match(cchar, "%s") or string.match(cchar, "%p") then
+        if cchar == "" or string.match(cchar, "%s") or string.match(cchar, "%p") then
             return nil
         end
-        return vim.fn.expand('<cword>')
+        return vim.fn.expand("<cword>")
     end
     return nil
 end
 
-function M.replace()
+local function replace()
     local wrd = get_cword()
     if wrd then
         vim.api.nvim_win_close(0, false)
@@ -164,21 +146,29 @@ function M.replace()
     end
 end
 
-function M.lookup(wrd)
-    if not M.wlist then
-        M.setup()
-    end
-    if #M.wlist == 0 then
-        if not M.start() then
-            return
+M.opts = {
+    dict = nil,
+    cache_dir = vim.env.HOME .. "/.cache/dict.nvim",
+    dict_dir = "/usr/share/dictd",
+}
+
+function M.setup(config)
+    if config then
+        for k, v in pairs(config) do
+            M.opts[k] = v
         end
+    end
+end
+
+function M.lookup(wrd)
+    if not wlist then M.setup() end
+    if #wlist == 0 then
+        if not start() then return end
     end
 
     if not wrd then
         wrd = get_cword()
-        if not wrd then
-            return
-        end
+        if not wrd then return end
     end
 
     local a
@@ -188,27 +178,38 @@ function M.lookup(wrd)
         a, _ = io.popen("dict '" .. wrd .. "' 2>/dev/null", "r")
     end
     if not a then
-        vim.api.nvim_err_writeln("Error running: " .. "dict '" .. wrd .. "'")
+        dwarn("Error running: " .. "dict '" .. wrd .. "'")
         return
     end
     local output = a:read("*a")
     local suc, ecd, cd
     suc, ecd, cd = a:close()
     if not suc then
-        vim.api.nvim_err_writeln("Error running dict: " .. tostring(suc) .. " " .. tostring(ecd) .. " " .. tostring(cd))
+        dwarn(
+            "Error running dict: "
+                .. tostring(suc)
+                .. " "
+                .. tostring(ecd)
+                .. " "
+                .. tostring(cd)
+        )
         return
     end
 
-    if output == '' then
-        if M.from_picker then
-            M.from_picker = false
-            vim.api.nvim_echo({{"dictd: no definitions found for "}, {wrd, "Identifier"}}, false, {})
+    if output == "" then
+        if from_picker then
+            from_picker = false
+            vim.api.nvim_echo(
+                { { "dictd: no definitions found for " }, { wrd, "Identifier" } },
+                false,
+                {}
+            )
         else
-            M.pick_word(wrd)
+            pick_word(wrd)
         end
         return
     end
-    M.from_picker = false
+    from_picker = false
 
     -- Pad space on the left
     output = string.gsub(output, "\n", "\n ")
@@ -219,29 +220,27 @@ function M.lookup(wrd)
     -- Mark beginning of pronunciation in Gcide
     output = string.gsub(output, "\\ %(", "\\ (")
 
-    local outlines = vim.fn.split("\n" .. output, "\n")
+    local outlines = vim.split("\n" .. output, "\n")
 
     if not M.b then
         M.b = vim.api.nvim_create_buf(false, true)
-        vim.api.nvim_buf_set_option(M.b, 'buftype', 'nofile')
-        vim.api.nvim_buf_set_option(M.b, 'bufhidden', 'hide')
-        vim.api.nvim_buf_set_option(M.b, 'swapfile', false)
-        vim.api.nvim_buf_set_option(M.b, 'tabstop', 2)
-        vim.api.nvim_buf_set_option(M.b, 'undolevels', -1)
-        vim.api.nvim_buf_set_option(M.b, 'syntax', 'dict')
-        vim.keymap.set('n', 'q',       ':quit<CR>', {silent = true, buffer  = M.b})
-        vim.keymap.set('n', '<Esc>',   ':quit<CR>', {silent = true, buffer  = M.b})
-        vim.keymap.set('n', '<Enter>', ':lua require("dict").replace()<CR>', {silent = false, buffer  = M.b})
+        vim.api.nvim_set_option_value("buftype", "nofile", { scope = "local", buf = M.b })
+        vim.api.nvim_set_option_value("bufhidden", "hide", { scope = "local", buf = M.b })
+        vim.api.nvim_set_option_value("swapfile", false, { scope = "local", buf = M.b })
+        vim.api.nvim_set_option_value("tabstop", 2, { scope = "local", buf = M.b })
+        vim.api.nvim_set_option_value("undolevels", -1, { scope = "local", buf = M.b })
+        vim.api.nvim_set_option_value("syntax", "dict", { scope = "local", buf = M.b })
+        vim.keymap.set("n", "q", ":quit<CR>", { silent = true, buffer = M.b })
+        vim.keymap.set("n", "<Esc>", ":quit<CR>", { silent = true, buffer = M.b })
+        vim.keymap.set("n", "<Enter>", replace, { silent = false, buffer = M.b })
     end
     vim.api.nvim_buf_set_lines(M.b, 0, -1, true, outlines)
 
-    if not M.wid then
+    if not wid then
         -- Center the window
         local nc = vim.o.columns
         local fcol = 2
-        if nc > 82 then
-            fcol = math.floor((nc - 80) / 2)
-        end
+        if nc > 82 then fcol = math.floor((nc - 80) / 2) end
         local wh = vim.api.nvim_win_get_height(0) - 2
         local fheight
         if wh > #outlines then
@@ -251,26 +250,26 @@ function M.lookup(wrd)
         end
         local frow = math.floor((wh - fheight) / 2)
 
-        local opts = {
-            relative = 'win',
+        local o = {
+            relative = "win",
             width = 80,
             height = fheight,
             col = fcol,
             row = frow,
-            anchor = 'NW',
-            style = 'minimal',
-            -- TODO: get the border from telescope
-            border = {
-                {"╭", "Normal"}, {"─", "Normal"}, {"╮", "Normal"}, {"│", "Normal"},
-                {"╯", "Normal"}, {"─", "Normal"}, {"╰", "Normal"}, {"│", "Normal"}},
-                noautocmd = true
-            }
-        M.wid = vim.api.nvim_open_win(M.b, true, opts)
-        vim.api.nvim_win_set_option(M.wid, "winhl", "Normal:TelescopePreviewNormal")
-        vim.api.nvim_win_set_option(M.wid, "conceallevel", 3)
-        vim.cmd('autocmd WinClosed <buffer> lua require("dict").winclosed()')
+            anchor = "NW",
+            style = "minimal",
+            noautocmd = true,
+        }
+        wid = vim.api.nvim_open_win(M.b, true, o)
+        vim.api.nvim_set_option_value(
+            "winhl",
+            "Normal:TelescopePreviewNormal",
+            { win = wid }
+        )
+        vim.api.nvim_set_option_value("conceallevel", 3, { win = wid })
+        vim.api.nvim_create_autocmd("WinClosed", { buffer = 0, callback = winclosed })
     end
-    vim.api.nvim_win_set_cursor(M.wid, {1, 0})
+    vim.api.nvim_win_set_cursor(wid, { 1, 0 })
 end
 
 return M
