@@ -12,16 +12,16 @@
 
 ## Installation
 
-  - Install `dict.nvim` as any other Neovim plugin.
-
-  - Install [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
-
   - Install `dict`, `dictd` and at least one dictionary.
     On Debian/Ubuntu systems, you can use `apt` to install them. Example:
 
     ```
     sudo apt install dict dictd dict-wn dict-gcide dict-freedict-por-eng
     ```
+
+  - Install `dict.nvim` as any other Neovim plugin.
+
+  - Install [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
 
 ## Configuration
 
@@ -46,7 +46,7 @@ list of words. Example:
 require'dict'.setup({
     dict = 'wn',
     dict_dir = '/usr/share/dictd',
-    cache_dir = os.getenv('HOME') .. '/.cache/dict.nvim',
+    cache_dir = vim.env.HOME .. '/.cache/dict.nvim',
 })
 ```
 
