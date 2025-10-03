@@ -11,7 +11,7 @@
     show the list of words in installed dictionaries if the word under cursor
     is not found by `dict`.
 
-![dict.nvim](https://raw.githubusercontent.com/jalvesaq/dict.nvim/screenshot.jpg "A dictionary entry in a float window")
+![dict.nvim](https://raw.githubusercontent.com/jalvesaq/dict.nvim/refs/heads/main/screenshot.png "A dictionary entry in a float window")
 
 ## Installation
 
