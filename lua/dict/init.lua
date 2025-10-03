@@ -1,5 +1,6 @@
 local function dwarn(msg) vim.notify(msg, vim.log.levels.WARN, { title = "dict" }) end
 local from_picker = false
+local telewarn = true
 local wlist = {}
 local wid
 
@@ -84,16 +85,33 @@ local function start()
 end
 
 local function pick_word(wrd)
+    if not wlist then M.setup() end
+    if #wlist == 0 then
+        if not start() then return end
+    end
+
+    local has_telescope = pcall(require, "telescope")
+    if not has_telescope then
+        if telewarn then
+            vim.notify(
+                string.format(
+                    '"%s" not found. Telescope is required to show a list of similar words.',
+                    wrd
+                ),
+                vim.log.levels.WARN,
+                { title = "dict.nvim" }
+            )
+            telewarn = false
+        end
+        return
+    end
+
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
     local conf = require("telescope.config").values
     local actions = require("telescope.actions")
     local action_state = require("telescope.actions.state")
 
-    if not wlist then M.setup() end
-    if #wlist == 0 then
-        if not start() then return end
-    end
     pickers
         .new({ default_text = wrd }, {
             finder = finders.new_table({

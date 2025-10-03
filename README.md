@@ -1,4 +1,4 @@
-# Dict.nvim
+# Dict.nvim: offline dictionaries in Neovim
 
   - Display in a floating window the result of `dict` for the word under the cursor.
 
@@ -7,8 +7,11 @@
 
   - Replace the word under the cursor with one chosen from `dict` results.
 
-  - Use [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) to show the list of words in installed dictionaries
-    if the word under cursor is not found by `dict`.
+  - Use [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) to
+    show the list of words in installed dictionaries if the word under cursor
+    is not found by `dict`.
+
+![dict.nvim](https://raw.githubusercontent.com/jalvesaq/dict.nvim/screenshot.jpg "A dictionary entry in a float window")
 
 ## Installation
 
