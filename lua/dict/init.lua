@@ -143,10 +143,12 @@ end
 local function winclosed() wid = nil end
 
 local get_cword = function()
-    local line = vim.fn.getline(".")
-    local cpos = vim.fn.getpos(".")
+    local wcur = vim.api.nvim_win_get_cursor(0)
+    if not wcur then return end
+    local line = vim.api.nvim_buf_get_lines(0, wcur[1] - 1, wcur[1], true)[1]
+    local cpos = wcur[2] + 1
     if type(line) == "string" then
-        local cchar = string.sub(line, cpos[3], cpos[3])
+        local cchar = string.sub(line, cpos, cpos)
         if cchar == "" or string.match(cchar, "%s") or string.match(cchar, "%p") then
             return nil
         end
