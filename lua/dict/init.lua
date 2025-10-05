@@ -166,12 +166,20 @@ local function replace()
     end
 end
 
+---@class DictUserOpts
+---@field dict? string Name of dictionary to restrict searches on
+---@field dict_dir? string Directory where the dictionaries are stores
+---@field cache_dir? string Directory where the list of words should be cached
+
+---@type DictUserOpts
 M.opts = {
     dict = nil,
     cache_dir = vim.env.HOME .. "/.cache/dict.nvim",
     dict_dir = "/usr/share/dictd",
 }
 
+--- Setup
+---@param config? DictUserOpts
 function M.setup(config)
     if config then
         for k, v in pairs(config) do
